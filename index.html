@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Blog App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+
+      header {
+        background: #333;
+        color: #fff;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      main {
+        padding: 2rem;
+      }
+
+      form {
+        margin-bottom: 2rem;
+        padding: 1rem;
+        background: #fff;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      form input,
+      form textarea {
+        width: 100%;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+
+      form button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 5px;
+        background: #333;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      form button:hover {
+        background: #555;
+      }
+
+      h2 {
+        margin-top: 2rem;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      ul li {
+        background: #fff;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      ul li strong {
+        display: block;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      ul li em {
+        display: block;
+        font-size: 0.9rem;
+        color: #555;
+      }
+
+      .blog-actions button {
+        margin-left: 10px;
+        padding: 0.3rem 0.6rem;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+
+      .blog-actions .delete-btn {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .blog-actions .edit-btn {
+        background-color: #3498db;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Welcome to the Simple Blog App</h1>
+    </header>
+    <main>
+      <form id="blogForm">
+        <input type="text" id="title" placeholder="Title" required /><br />
+        <textarea id="content" placeholder="Content" required></textarea><br />
+        <button type="submit">Add Blog</button>
+      </form>
+      <h2>All Blogs</h2>
+      <ul id="blogList"></ul>
+    </main>
+    <script>
+      document
+        .getElementById('blogForm')
+        .addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const title = document.getElementById('title').value;
+          const content = document.getElementById('content').value;
+
+          await fetch('/blogs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content }),
+          });
+
+          loadBlogs();
+        });
+
+      async function loadBlogs() {
+        const response = await fetch('/blogs');
+        const blogs = await response.json();
+        const blogList = document.getElementById('blogList');
+        blogList.innerHTML = blogs
+          .map(
+            (blog) => `
+                <li>
+                    <div>
+                        <strong>${blog.title}</strong>${blog.content} <em>(${blog.createdAt})</em>
+                    </div>
+                    <div class="blog-actions">
+                        <button class="edit-btn" onclick="editBlog('${blog.id}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteBlog('${blog.id}')">Delete</button>
+                    </div>
+                </li>`
+          )
+          .join('');
+      }
+
+      async function deleteBlog(id) {
+        await fetch(`/blogs/${id}`, {
+          method: 'DELETE',
+        });
+        loadBlogs();
+      }
+
+      async function editBlog(id) {
+        const newTitle = prompt('Enter new title:');
+        const newContent = prompt('Enter new content:');
+        if (newTitle && newContent) {
+          await fetch(`/blogs/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: newTitle, content: newContent }),
+          });
+          loadBlogs();
+        }
+      }
+
+      loadBlogs();
+    </script>
+  </body>
+</html>
